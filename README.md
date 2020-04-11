@@ -4,12 +4,10 @@ SharePointOnlineTasker is .NET Core console application which performs tasks (se
 
 ## Prerequisites
 
-### Turn on the Drive API
-
-#### Create a new App registrations.
+### Create a new App registrations.
 Careate a new App registrations in Azure's Acitve Directory, and add 'http://localhost' to it's Redirect URIs.
 
-#### Configure the takser.
+### Configure the takser.
 
 fill the info for fowwilowing fields in appsettings.json:
 - AppRegistration:TenantId
