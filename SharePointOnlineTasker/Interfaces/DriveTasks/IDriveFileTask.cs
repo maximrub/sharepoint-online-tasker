@@ -3,9 +3,9 @@ using SharePointOnlineTasker.Entities;
 
 namespace SharePointOnlineTasker.Interfaces.DriveTasks
 {
-    public interface IGoogleDriveFileTask
+    public interface IDriveFileTask
     {
         string Name { get; }
-        Task ExecuteAsync(GoogleDriveFile googleDriveFile);
+        Task ExecuteAsync(DriveFile driveFile);
     }
 }

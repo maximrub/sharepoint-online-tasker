@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -9,7 +8,7 @@ using SharePointOnlineTasker.Interfaces.DriveTasks;
 
 namespace SharePointOnlineTasker.Services.DriveTasks
 {
-    public class LocalFileRemover : IGoogleDriveFileTask
+    public class LocalFileRemover : IDriveFileTask
     {
         private readonly IConfiguration _configuration;
 
@@ -20,21 +19,21 @@ namespace SharePointOnlineTasker.Services.DriveTasks
 
         public string Name => "LocalFileRemover";
 
-        public async Task ExecuteAsync(GoogleDriveFile googleDriveFile)
+        public async Task ExecuteAsync(DriveFile driveFile)
         {
-            string localFullName = Path.Combine(_configuration["LocalRoot"], googleDriveFile.FullName);
+            string localFullName = Path.Combine(_configuration["LocalRoot"], driveFile.FullName);
             FileInfo file = new FileInfo(localFullName);
-            if (file.Exists && file.Length == googleDriveFile.SizeInBytes)
+            if (file.Exists && file.Length == driveFile.SizeInBytes)
             {
-                byte[] md5Hash;
+                byte[] quickXorHashBytes;
                 await using (FileStream inputStream = new FileStream(file.FullName, FileMode.Open))
                 {
-                    using MD5 algorithm = MD5.Create();
-                    md5Hash = CalculateHash(inputStream, algorithm);
+                    using HashAlgorithm algorithm = new QuickXorHash();
+                    quickXorHashBytes = CalculateHash(inputStream, algorithm);
                 }
 
-                string md5HashHex = string.Join(string.Empty, md5Hash.Select(b => b.ToString("x2")));
-                if (md5HashHex.Equals(googleDriveFile.Md5Checksum, StringComparison.InvariantCultureIgnoreCase))
+                string quickXorHash = Convert.ToBase64String(quickXorHashBytes);
+                if (quickXorHash.Equals(driveFile.QuickXorHash, StringComparison.InvariantCultureIgnoreCase))
                 {
                     file.Delete();
                 }

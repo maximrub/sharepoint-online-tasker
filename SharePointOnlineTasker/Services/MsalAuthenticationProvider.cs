@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading;
@@ -9,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
 using Microsoft.Identity.Client;
+using Directory = System.IO.Directory;
 using File = System.IO.File;
 using Prompt = Microsoft.Identity.Client.Prompt;
 
@@ -33,6 +35,12 @@ namespace SharePointOnlineTasker.Services
             _logger = logger;
 
             _credentialsFilePath = Path.Combine(configuration["DataStorePath"], configuration["CredentialsFile"]);
+            string credentialsPath = Path.GetDirectoryName(_credentialsFilePath);
+            if (!Directory.Exists(credentialsPath))
+            {
+                Directory.CreateDirectory(credentialsPath);
+            }
+
             _clientApp = PublicClientApplicationBuilder.Create(configuration["AppRegistration:ClientId"])
                 .WithAuthority($"https://login.microsoftonline.com/{configuration["AppRegistration:TenantId"]}")
                 .WithDefaultRedirectUri()
@@ -99,10 +107,33 @@ namespace SharePointOnlineTasker.Services
         {
             string[] scopes = _configuration.GetSection("Scopes").Get<string[]>();
 
+            AuthenticationResult authResult;
+
+            try
+            {
+                IEnumerable<IAccount> accounts = await _clientApp.GetAccountsAsync();
+                IAccount selectedAccount = accounts.FirstOrDefault();
+                authResult = selectedAccount == null
+                    ? await AcquireTokenInteractive(scopes)
+                    : await _clientApp.AcquireTokenSilent(scopes, selectedAccount).ExecuteAsync();
+            }
+            catch (MsalUiRequiredException)
+            {
+                // A MsalUiRequiredException happened on AcquireTokenSilent. 
+                // This indicates you need to call AcquireTokenInteractive to acquire a token
+
+                authResult = await AcquireTokenInteractive(scopes);
+            }
+
+            return authResult.AccessToken;
+        }
+
+        private async Task<AuthenticationResult> AcquireTokenInteractive(string[] scopes)
+        {
             AuthenticationResult authResult = await _clientApp.AcquireTokenInteractive(scopes)
                 .WithPrompt(Prompt.SelectAccount)
                 .ExecuteAsync();
-            return authResult.AccessToken;
+            return authResult;
         }
     }
 }

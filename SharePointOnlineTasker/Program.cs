@@ -62,17 +62,17 @@ namespace SharePointOnlineTasker
 
         private static void RegisterServices(ContainerBuilder containerBuilder)
         {
-            containerBuilder.RegisterType<MsalAuthenticationProvider>().As<IAuthenticationProvider>();
+            containerBuilder.RegisterType<MsalAuthenticationProvider>().As<IAuthenticationProvider>().SingleInstance();
             containerBuilder.RegisterType<TasksRunner>().As<ITasksRunner>();
             containerBuilder.RegisterAssemblyTypes(Assembly.GetExecutingAssembly())
-                .Except<GoogleDriveFileTasksComposite>()
-                .AssignableTo<IGoogleDriveFileTask>()
-                .Named<IGoogleDriveFileTask>("GoogleDriveFileTask");
+                .Except<DriveFileTasksComposite>()
+                .AssignableTo<IDriveFileTask>()
+                .Named<IDriveFileTask>("DriveFileTask");
             containerBuilder.Register(context =>
-                    new GoogleDriveFileTasksComposite(
-                        context.ResolveNamed<IEnumerable<IGoogleDriveFileTask>>("GoogleDriveFileTask"),
-                        context.Resolve<ILogger<GoogleDriveFileTasksComposite>>()))
-                .As<IGoogleDriveFileTask>();
+                    new DriveFileTasksComposite(
+                        context.ResolveNamed<IEnumerable<IDriveFileTask>>("DriveFileTask"),
+                        context.Resolve<ILogger<DriveFileTasksComposite>>()))
+                .As<IDriveFileTask>();
         }
 
         /// <summary>
@@ -83,8 +83,6 @@ namespace SharePointOnlineTasker
         /// <returns>ServiceCollection of registered .NET Core services</returns>
         private static IServiceCollection RegisterNetCoreLibraries(IConfiguration configuration)
         {
-            
-
             return new ServiceCollection()
                 .AddLogging(loggingBuilder =>
                 {

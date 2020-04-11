@@ -3,24 +3,24 @@ using System.Text.Json;
 
 namespace SharePointOnlineTasker.Entities
 {
-    public class GoogleDriveFile : IEquatable<GoogleDriveFile>
+    public class DriveFile : IEquatable<DriveFile>
     {
-        public GoogleDriveFile(string id, string name, string fullName, string md5Checksum, long sizeInBytes)
+        public DriveFile(string id, string name, string fullName, string quickXorHash, long sizeInBytes)
         {
             Id = id;
             Name = name;
             FullName = fullName;
-            Md5Checksum = md5Checksum;
+            QuickXorHash = quickXorHash;
             SizeInBytes = sizeInBytes;
         }
 
         public string Id { get; }
         public string Name { get; }
         public string FullName { get; }
-        public string Md5Checksum { get; }
+        public string QuickXorHash { get; }
         public long SizeInBytes { get; }
 
-        public bool Equals(GoogleDriveFile other)
+        public bool Equals(DriveFile other)
         {
             if (other == null)
             {
@@ -35,26 +35,26 @@ namespace SharePointOnlineTasker.Entities
             return Id.Equals(other.Id, StringComparison.InvariantCultureIgnoreCase) && 
                    Name.Equals(other.Name, StringComparison.InvariantCultureIgnoreCase) &&
                    FullName.Equals(other.FullName, StringComparison.InvariantCultureIgnoreCase) &&
-                   Md5Checksum.Equals(other.Md5Checksum, StringComparison.InvariantCultureIgnoreCase) &&
+                   QuickXorHash.Equals(other.QuickXorHash, StringComparison.InvariantCultureIgnoreCase) &&
                    SizeInBytes == other.SizeInBytes;
         }
 
         public override bool Equals(object obj)
         {
-            return Equals(obj as GoogleDriveFile);
+            return Equals(obj as DriveFile);
         }
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(Id, Name, FullName, Md5Checksum, SizeInBytes);
+            return HashCode.Combine(Id, Name, FullName, QuickXorHash, SizeInBytes);
         }
 
-        public static bool operator ==(GoogleDriveFile left, GoogleDriveFile right)
+        public static bool operator ==(DriveFile left, DriveFile right)
         {
             return Equals(left, right);
         }
 
-        public static bool operator !=(GoogleDriveFile left, GoogleDriveFile right)
+        public static bool operator !=(DriveFile left, DriveFile right)
         {
             return !Equals(left, right);
         }
