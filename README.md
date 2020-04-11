@@ -14,7 +14,7 @@ fill the info for fowwilowing fields in appsettings.json:
 - AppRegistration:ClientId
 - GroupName
 - DriveName
--LocalRoot
+- LocalRoot
 
 ## Getting Started
 
