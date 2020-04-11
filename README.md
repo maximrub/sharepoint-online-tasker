@@ -1,4 +1,4 @@
-+# GoogleDriveTasker
+# SharePointOnlineTasker
 
 SharePointOnlineTasker is .NET Core console application which performs tasks (sets of actions) on files stored in the connected Office 365 group.
 
