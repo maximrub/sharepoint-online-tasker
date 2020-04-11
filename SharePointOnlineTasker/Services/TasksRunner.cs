@@ -52,7 +52,10 @@ namespace SharePointOnlineTasker.Services
                             await RunAsync(graphClient, drive, item);
                         }
 
-                        collectionPage = await collectionPage.NextPageRequest.GetAsync();
+                        if (collectionPage.NextPageRequest != null)
+                        {
+                            collectionPage = await collectionPage.NextPageRequest.GetAsync();
+                        }
                     } while (collectionPage?.NextPageRequest != null);
                 }
             }
@@ -80,7 +83,11 @@ namespace SharePointOnlineTasker.Services
                     {
                         await RunAsync(graphClient, drive, driveItem);
                     }
-                    collectionPage = await collectionPage.NextPageRequest.GetAsync();
+
+                    if (collectionPage.NextPageRequest != null)
+                    {
+                        collectionPage = await collectionPage.NextPageRequest.GetAsync();
+                    }
                 } while (collectionPage?.NextPageRequest != null);
             }
         }
