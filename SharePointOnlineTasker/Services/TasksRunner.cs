@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Memory;
@@ -49,7 +50,7 @@ namespace SharePointOnlineTasker.Services
                     {
                         foreach (DriveItem item in collectionPage)
                         {
-                            await RunAsync(graphClient, drive, item);
+                            await RunAsync(graphClient, drive, item, _configuration["DriveName"]);
                         }
 
                         if (collectionPage.NextPageRequest != null)
@@ -61,11 +62,13 @@ namespace SharePointOnlineTasker.Services
             }
         }
 
-        private async Task RunAsync(GraphServiceClient graphClient, Drive drive, DriveItem item)
+        private async Task RunAsync(GraphServiceClient graphClient, Drive drive, DriveItem item, string parentPath)
         {
             if (item.File != null)
             {
-                DriveFile driveFile = new DriveFile(item.Id, item.Name, item.WebUrl.Substring(item.WebUrl.IndexOf(drive.Name)), item.File.Hashes.QuickXorHash, item.Size ?? 0);
+                string fullName = Path.Combine(parentPath, item.Name);
+                DriveFile driveFile = new DriveFile(item.Id, item.Name, fullName, item.File.Hashes.QuickXorHash,
+                    item.Size ?? 0);
                 await _googleDriveFileTask.ExecuteAsync(driveFile);
             }
             else if (item.Folder != null)
@@ -77,16 +80,20 @@ namespace SharePointOnlineTasker.Services
                     .Request()
                     .GetAsync();
 
+                string fullName = Path.Combine(parentPath, item.Name);
+                bool firstIteration = true;
                 do
                 {
-                    foreach (DriveItem driveItem in collectionPage)
-                    {
-                        await RunAsync(graphClient, drive, driveItem);
-                    }
-
-                    if (collectionPage.NextPageRequest != null)
+                    if (!firstIteration)
                     {
                         collectionPage = await collectionPage.NextPageRequest.GetAsync();
+                    }
+
+                    firstIteration = false;
+
+                    foreach (DriveItem driveItem in collectionPage)
+                    {
+                        await RunAsync(graphClient, drive, driveItem, fullName);
                     }
                 } while (collectionPage?.NextPageRequest != null);
             }
@@ -98,17 +105,20 @@ namespace SharePointOnlineTasker.Services
                 .Filter($"startswith(displayName,'{_configuration["GroupName"]}')")
                 .GetAsync();
             Group group;
+            bool firstIteration = true;
 
             do
             {
-                group = groups.FirstOrDefault(g =>
-                    g.DisplayName.Equals(_configuration["GroupName"], StringComparison.InvariantCultureIgnoreCase));
-                if (groups.NextPageRequest != null)
+                if (!firstIteration)
                 {
                     groups = await groups.NextPageRequest
                         .Filter($"startswith(displayName,'{_configuration["GroupName"]}')")
                         .GetAsync();
                 }
+
+                firstIteration = false;
+                group = groups.FirstOrDefault(g =>
+                    g.DisplayName.Equals(_configuration["GroupName"], StringComparison.InvariantCultureIgnoreCase));
             } while (group == null && groups?.NextPageRequest != null);
 
             return group;
@@ -120,16 +130,19 @@ namespace SharePointOnlineTasker.Services
                 .Request()
                 .GetAsync();
             Drive drive;
+            bool firstIteration = true;
 
             do
             {
-                drive = drives.FirstOrDefault(d =>
-                    d.Name.Equals(_configuration["DriveName"], StringComparison.InvariantCultureIgnoreCase));
-                if (drives.NextPageRequest != null)
+                if (!firstIteration)
                 {
                     drives = await drives.NextPageRequest
-                       .GetAsync();
+                        .GetAsync();
                 }
+
+                firstIteration = false;
+                drive = drives.FirstOrDefault(d =>
+                    d.Name.Equals(_configuration["DriveName"], StringComparison.InvariantCultureIgnoreCase));
             } while (drive == null && drives?.NextPageRequest != null);
 
             return drive;
